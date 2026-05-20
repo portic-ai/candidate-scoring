@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retention Technologies · Scoring de Candidatos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css?v=7" />
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js"></script>
+
+<script type="text/babel" src="components/Radar.jsx"></script>
+<script type="text/babel" src="components/ListView.jsx"></script>
+<script type="text/babel" src="components/DetailView.jsx"></script>
+<script type="text/babel" src="components/CompareView.jsx"></script>
+<script type="text/babel" src="components/TweaksPanel.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const DEFAULT_TWEAKS = /*EDITMODE-BEGIN*/{
+  "compare": "both",
+  "density": "comfy"
+}/*EDITMODE-END*/;
+
+// Persist view across reloads
+const STORAGE_KEY = 'rt_scoring_view_v1';
+
+const App = () => {
+  const [route, setRoute] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && saved.view) return saved;
+    } catch (e) {}
+    return { view: 'list', candidateId: null, compare: [] };
+  });
+  const [compare, setCompare] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && Array.isArray(saved.compare)) return saved.compare;
+    } catch (e) {}
+    return ['c1','c5','c3'];
+  });
+  const [tweaks, setTweaks] = useState(DEFAULT_TWEAKS);
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [hint, setHint] = useState('');
+
+  // Listen for Tweaks messages from the host
+  useEffect(() => {
+    const handler = (e) => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') setTweaksVisible(true);
+      if (d.type === '__deactivate_edit_mode') setTweaksVisible(false);
+    };
+    window.addEventListener('message', handler);
+    // announce availability after listener is registered
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({...route, compare}));
+  }, [route, compare]);
+
+  const onTweakChange = (t) => {
+    setTweaks(t);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits: t}, '*');
+  };
+
+  const openCandidate = (id) => setRoute({view:'detail', candidateId: id});
+  const backToList = () => setRoute({view:'list', candidateId: null});
+  const goCompare = () => setRoute({view:'compare'});
+
+  const toggleCompare = (id) => {
+    setCompare(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 4) {
+        setHint('Máximo 4 candidatos en comparación'); setTimeout(()=>setHint(''), 1800);
+        return prev;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const compareSet = new Set(compare);
+  const candidate = window.CANDIDATES.find(c => c.id === route.candidateId);
+
+  const NavItem = ({ icon, label, count, active, onClick }) => (
+    <button className={`nav-item ${active?'active':''}`} onClick={onClick} title={label}>
+      <span className="nav-icon">{icon}</span>
+      <span className="nav-label">{label}</span>
+      {count !== undefined && <span className="count">{count}</span>}
+    </button>
+  );
+
+  return (
+    <div className="app sidebar-hover">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">RT</div>
+          <div className="brand-name nav-label">Retention<small>Technologies</small></div>
+        </div>
+        <div className="nav-section">
+          <div className="nav-head nav-label">Posiciones activas</div>
+          <NavItem icon="◈" label="Asesor de Seguros" count="74" active />
+          <NavItem icon="◇" label="Ejecutivo de Cuenta" count="31" />
+          <NavItem icon="◇" label="Operador de Cobranza" count="18" />
+          <NavItem icon="◇" label="Analista de Siniestros" count="9" />
+        </div>
+        <div className="nav-section">
+          <div className="nav-head nav-label">Herramientas</div>
+          <NavItem icon="⇄" label="Comparar" count={compare.length} onClick={goCompare} />
+          <NavItem icon="◎" label="Perfil ideal" />
+          <NavItem icon="⚙" label="Modelo & pesos" />
+          <NavItem icon="▤" label="Reportes" />
+        </div>
+        <div className="nav-section">
+          <div className="nav-head nav-label">Trazabilidad</div>
+          <NavItem icon="✓" label="Auditoría de decisiones" />
+          <NavItem icon="⚖" label="Sesgos y equidad" />
+        </div>
+        <div className="sidebar-foot">
+          <div className="avatar-sm">AR</div>
+          <div className="nav-label" style={{fontSize:12, lineHeight:1.3}}>
+            <div style={{color:'var(--ink)', fontWeight:500}}>Ana Restrepo</div>
+            <div style={{color:'var(--ink-4)', fontSize:11}}>Talent Lead</div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main pane */}
+      <main className="main">
+        <div className="topbar">
+          {route.view === 'list' && (
+            <>
+              <h1 className="serif">Pipeline <em>de candidatos</em></h1>
+              <div className="topbar-spacer"></div>
+              <div className="search">
+                <span style={{color:'var(--ink-4)', fontSize:13}}>⌕</span>
+                <input placeholder="Buscar por nombre, CV, ciudad..." />
+              </div>
+              <button className="btn" onClick={goCompare}>Comparar ({compare.length})</button>
+              <button className="btn primary">Invitar candidato</button>
+            </>
+          )}
+          {route.view === 'detail' && candidate && (
+            <>
+              <h1 className="serif">{candidate.name}</h1>
+              <span style={{fontSize:11, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--ink-4)', marginLeft:8}}>· Asesor de Seguros</span>
+              <div className="topbar-spacer"></div>
+              <button className="btn" onClick={() => toggleCompare(candidate.id)}>{compareSet.has(candidate.id) ? '✓ En comparación' : '+ Comparar'}</button>
+              <button className="btn">↗ Siguiente fase</button>
+              <button className="btn primary">Avanzar a decisión</button>
+            </>
+          )}
+          {route.view === 'compare' && (
+            <>
+              <h1 className="serif">Comparar <em>candidatos</em></h1>
+              <div className="topbar-spacer"></div>
+              <button className="btn">Exportar PDF</button>
+            </>
+          )}
+        </div>
+
+        {route.view === 'list' && (
+          <ListView
+            candidates={window.CANDIDATES}
+            onOpen={openCandidate}
+            onCompare={toggleCompare}
+            compareSet={compareSet}
+            density={tweaks.density}
+          />
+        )}
+        {route.view === 'detail' && candidate && (
+          <DetailView candidate={candidate} onBack={backToList} tweaks={tweaks} />
+        )}
+        {route.view === 'compare' && (
+          <CompareView
+            candidates={window.CANDIDATES}
+            selected={compare}
+            onOpen={openCandidate}
+            onRemove={toggleCompare}
+            onAdd={toggleCompare}
+            onBack={backToList}
+          />
+        )}
+      </main>
+
+      <TweaksPanel tweaks={tweaks} onChange={onTweakChange} visible={tweaksVisible} />
+      {hint && <div className={`hint ${hint?'show':''}`}>{hint}</div>}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
