@@ -782,6 +782,122 @@ select.sort-select {
 .psico-score small { color: var(--ink-4); font-size: 11px; font-weight: 500;}
 .psico-note { font-size: 11.5px; color: var(--ink-3); line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-soft);}
 
+/* Psychotechnical Profile — AI Summary */
+.psico-summary {
+  display: flex; gap: 12px; padding: 14px 16px;
+  background: oklch(0.97 0.01 260); border: 1px solid oklch(0.90 0.03 260);
+  border-radius: 10px; margin-bottom: 16px;
+}
+.psico-summary-icon {
+  font-size: 18px; color: oklch(0.55 0.15 260); flex-shrink: 0; margin-top: 1px;
+}
+.psico-summary-content { display: flex; flex-direction: column; gap: 4px; }
+.psico-summary-overall { font-size: 13px; font-weight: 600; color: var(--ink); }
+.psico-summary-line { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.psico-summary-line.strengths { color: oklch(0.42 0.12 155); }
+.psico-summary-line.concerns { color: oklch(0.45 0.14 30); }
+.psico-summary-stats { font-size: 11px; color: var(--ink-4); margin-top: 2px; font-family: var(--mono); }
+
+/* Psychotechnical Profile — Dispersion Chart */
+.psico-profile-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding: 8px 12px;
+  background: var(--bg-soft); border-radius: 8px;
+  font-size: 12px; color: var(--ink-3);
+}
+.psico-profile-legend {
+  display: flex; gap: 14px; margin-bottom: 14px; padding: 0 4px;
+  font-size: 11px; color: var(--ink-3); flex-wrap: wrap;
+}
+.psico-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.psico-legend-bar {
+  width: 18px; height: 6px; border-radius: 3px;
+}
+.psico-legend-bar.aumenta     { background: oklch(0.72 0.16 145); }
+.psico-legend-bar.neutral     { background: oklch(0.78 0.12 85); }
+.psico-legend-bar.dism-leve   { background: oklch(0.65 0.15 50); }
+.psico-legend-bar.dism-fuerte { background: oklch(0.55 0.18 25); }
+
+.psico-profile-body {
+  max-height: 520px; overflow-y: auto;
+  padding-right: 4px;
+}
+.psico-profile-group { margin-bottom: 12px; }
+.psico-group-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-4); font-weight: 700; padding: 6px 0 4px;
+  border-bottom: 1px solid var(--line-soft); margin-bottom: 2px;
+}
+
+.psico-disp-row {
+  display: grid;
+  grid-template-columns: 160px 22px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  transition: background 0.12s;
+}
+.psico-disp-row:last-child { border-bottom: none; }
+.psico-disp-row:hover { background: var(--bg-soft); border-radius: 4px; }
+
+.psico-disp-name {
+  font-size: 12px; color: var(--ink-2); font-weight: 500;
+  line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.psico-disp-weight {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  width: 18px; height: 18px; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-transform: uppercase; letter-spacing: -0.01em;
+}
+.psico-disp-weight.high { background: var(--bad-tint); color: var(--bad-ink); }
+.psico-disp-weight.mid  { background: var(--warn-tint); color: oklch(0.55 0.1 70); }
+.psico-disp-weight.low  { background: var(--bg-soft); color: var(--ink-4); }
+
+.psico-disp-bar {
+  position: relative; height: 8px;
+  background: var(--bg-sunken); border-radius: 4px;
+}
+.psico-disp-center {
+  position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1.5px;
+  background: var(--ink-4); opacity: 0.5; border-radius: 1px;
+}
+.psico-disp-fill {
+  position: absolute; top: 0; bottom: 0;
+  border-radius: 3px;
+  transition: width 0.25s ease;
+}
+/* 4-band color system matching the Excel ranges */
+.psico-disp-fill.ideal       { background: transparent; }
+.psico-disp-fill.aumenta     { background: oklch(0.72 0.16 145); } /* green — close to ideal */
+.psico-disp-fill.neutral     { background: oklch(0.78 0.12 85); }  /* yellow/amber — neutral territory */
+.psico-disp-fill.dism-leve   { background: oklch(0.65 0.15 50); } /* orange — slight penalty */
+.psico-disp-fill.dism-fuerte { background: oklch(0.55 0.18 25); } /* dark red — strong penalty */
+
+.psico-disp-val {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  text-align: right;
+}
+.psico-disp-val.ideal       { color: var(--good-ink); }
+.psico-disp-val.aumenta     { color: oklch(0.45 0.14 145); }
+.psico-disp-val.neutral     { color: oklch(0.50 0.12 85); }
+.psico-disp-val.dism-leve   { color: oklch(0.50 0.15 50); }
+.psico-disp-val.dism-fuerte { color: oklch(0.45 0.18 25); }
+
+/* Row highlight for severe deviations */
+.psico-disp-row.dism-fuerte { background: oklch(0.97 0.02 25); }
+.psico-disp-row.dism-fuerte:hover { background: oklch(0.95 0.03 25); }
+
+.psico-profile-footer {
+  font-size: 11px; color: var(--ink-3); line-height: 1.5;
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+.psico-profile-footer strong {
+  font-weight: 700; color: var(--ink-2);
+}
+
 /* Stage contribution */
 .stage-contrib { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;}
 .stage-card {

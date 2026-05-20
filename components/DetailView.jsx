@@ -190,7 +190,7 @@ const DetailView = ({ candidate, onBack, tweaks }) => {
                 Extracto CV
               </button>
               <button className={`ev-tab ${evTab==='psico'?'active':''}`} onClick={()=>setEvTab('psico')}>
-                Psicotécnico<span className="tag">{psico.length || 0}</span>
+                Psicotécnico<span className="tag">{(window.PSICO_PROFILE[c.id] || []).length || psico.length || 0}</span>
               </button>
               <div style={{flex:1}}/>
               <button className="ev-tab" style={{color:'var(--ink-4)'}}>⇲ Exportar</button>
@@ -204,7 +204,7 @@ const DetailView = ({ candidate, onBack, tweaks }) => {
               {evTab === 'cv' && !cvExtract && (
                 <div style={{color:'var(--ink-4)', fontSize:13}}>Sin extracto de CV para esta dimensión.</div>
               )}
-              {evTab === 'psico' && <PsicoView items={psico} />}
+              {evTab === 'psico' && <PsicoView items={psico} candidateId={c.id} />}
             </div>
           </div>
         )}
@@ -397,31 +397,167 @@ const TranscriptView = ({ lines }) => {
   );
 };
 
-const PsicoView = ({ items }) => {
-  if (!items || !items.length || items[0].name?.startsWith('N/A')) return <div style={{color:'var(--ink-4)', fontSize:13, padding:'20px 0'}}>Esta dimensión no se mide en el psicotécnico, o el candidato aún no lo ha realizado.</div>;
+// Generate AI-style psico summary from profile data
+function generatePsicoSummary(profile, candidateId) {
+  const candidate = window.CANDIDATES.find(c => c.id === candidateId);
+  const psicoScore = candidate?.stageScores?.psico;
+
+  // Classify all variables
+  const classified = profile.map(v => ({
+    ...v,
+    band: window.classifyPsicoScore(v, v.score),
+    delta: v.score - v.ideal,
+  }));
+
+  const ideal = classified.filter(v => v.band === 'ideal');
+  const aumenta = classified.filter(v => v.band === 'aumentaLeve');
+  const neutral = classified.filter(v => v.band === 'neutral');
+  const dismLeve = classified.filter(v => v.band === 'disminuyeLeve');
+  const dismFuerte = classified.filter(v => v.band === 'disminuyeFuerte');
+
+  // High-weight concerns
+  const highWeightConcerns = classified.filter(v => v.weight === 'ALTO' && (v.band === 'disminuyeLeve' || v.band === 'disminuyeFuerte'));
+  const highWeightStrengths = classified.filter(v => v.weight === 'ALTO' && (v.band === 'ideal' || v.band === 'aumentaLeve'));
+
+  // Overall assessment
+  let overall;
+  if (dismFuerte.length === 0 && dismLeve.length <= 2) {
+    overall = 'Perfil muy alineado con el cargo.';
+  } else if (dismFuerte.length === 0 && dismLeve.length <= 5) {
+    overall = 'Perfil aceptable con algunas áreas a monitorear.';
+  } else if (dismFuerte.length <= 2) {
+    overall = 'Perfil con desviaciones moderadas que podrían impactar el desempeño.';
+  } else {
+    overall = 'Perfil con desviaciones significativas respecto al ideal del cargo.';
+  }
+
+  // Build strengths line
+  let strengths = '';
+  if (highWeightStrengths.length > 0) {
+    const names = highWeightStrengths.slice(0, 4).map(v => v.name);
+    strengths = `Fortalezas clave: ${names.join(', ')}.`;
+  } else if (ideal.length + aumenta.length > 15) {
+    strengths = `${ideal.length + aumenta.length} de ${profile.length} variables dentro del rango óptimo.`;
+  }
+
+  // Build concerns line
+  let concerns = '';
+  if (highWeightConcerns.length > 0) {
+    const names = highWeightConcerns.slice(0, 4).map(v => v.name);
+    concerns = `Alertas (peso alto): ${names.join(', ')}.`;
+  }
+  if (dismFuerte.length > 0 && !concerns) {
+    const names = dismFuerte.slice(0, 3).map(v => v.name);
+    concerns = `Desviaciones fuertes en: ${names.join(', ')}.`;
+  }
+
+  // Stats line
+  const stats = `${ideal.length} en ideal · ${aumenta.length} aceptables · ${neutral.length} neutrales · ${dismLeve.length + dismFuerte.length} con desviación`;
+
+  return { overall, strengths, concerns, stats, psicoScore };
+}
+
+const PsicoView = ({ items, candidateId }) => {
+  const profile = window.PSICO_PROFILE && window.PSICO_PROFILE[candidateId];
+
+  if (!profile || !profile.length) {
+    return <div style={{color:'var(--ink-4)', fontSize:13, padding:'20px 0'}}>Esta dimensión no se mide en el psicotécnico, o el candidato aún no lo ha realizado.</div>;
+  }
+
+  const summary = generatePsicoSummary(profile, candidateId);
+
+  // Group by test
+  const groups = [];
+  let currentTest = null;
+  profile.forEach(v => {
+    if (v.test !== currentTest) {
+      currentTest = v.test;
+      groups.push({ test: v.test, items: [] });
+    }
+    groups[groups.length - 1].items.push(v);
+  });
+
+  const maxDev = Math.max(...profile.map(v => Math.abs(v.score - v.ideal)), 4);
+
+  // Use the range-based classification
+  const getBand = (variable, score) => window.classifyPsicoScore(variable, score);
+
+  const bandCls = {
+    'ideal': 'ideal',
+    'aumentaLeve': 'aumenta',
+    'neutral': 'neutral',
+    'disminuyeLeve': 'dism-leve',
+    'disminuyeFuerte': 'dism-fuerte',
+  };
+
+  const weightLabel = { 'ALTO': 'A', 'MEDIO': 'M', 'BAJO': 'B' };
+  const weightCls = { 'ALTO': 'high', 'MEDIO': 'mid', 'BAJO': 'low' };
+
   return (
-    <div>
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:10, padding:'8px 12px', background:'var(--bg-soft)', borderRadius:8, fontSize:12, color:'var(--ink-3)'}}>
+    <div className="psico-profile">
+      <div className="psico-summary">
+        <div className="psico-summary-icon">✦</div>
+        <div className="psico-summary-content">
+          <div className="psico-summary-overall">{summary.overall}</div>
+          {summary.strengths && <div className="psico-summary-line strengths">{summary.strengths}</div>}
+          {summary.concerns && <div className="psico-summary-line concerns">{summary.concerns}</div>}
+          <div className="psico-summary-stats">{summary.stats}</div>
+        </div>
+      </div>
+
+      <div className="psico-profile-header">
         <span style={{width:8, height:8, borderRadius:'50%', background:'var(--rt)', flexShrink:0}}></span>
-        Batería Hogan + cuestionario propio · 38 min <span style={{marginLeft:'auto', color:'var(--ink-4)'}}>línea vertical = percentil objetivo</span>
+        Batería PGV + 16FP + Dominancias · Escala 1–10
+        <span style={{marginLeft:'auto', color:'var(--ink-4)', fontSize:11}}>línea central = ideal del cargo</span>
       </div>
-      <div className="psico-grid">
-        {items.map((p, i) => {
-          const cls = p.score >= p.ideal ? 'good' : (p.score >= p.ideal - 8 ? 'warn' : 'bad');
-          return (
-            <div className="psico-item" key={i}>
-              <div className="psico-name">{p.name}</div>
-              <div className="psico-bar-wrap">
-                <div className={`psico-bar-fill ${cls}`} style={{width:`${p.score}%`}}></div>
-                <div className="psico-ideal-mark" style={{left:`${p.ideal}%`}}></div>
-              </div>
-              <div className="psico-score">{p.score}<small>p</small></div>
-            </div>
-          );
-        })}
+
+      <div className="psico-profile-legend">
+        <span className="psico-legend-item"><span className="psico-legend-bar aumenta"></span>Aumenta leve</span>
+        <span className="psico-legend-item"><span className="psico-legend-bar neutral"></span>Neutral</span>
+        <span className="psico-legend-item"><span className="psico-legend-bar dism-leve"></span>Disminuye leve</span>
+        <span className="psico-legend-item"><span className="psico-legend-bar dism-fuerte"></span>Disminuye fuerte</span>
       </div>
-      <div className="psico-note">
-        Los percentiles comparan contra una norma de 1.240 asesores de seguros activos en Colombia. El objetivo se fija por análisis predictivo de desempeño a 12 meses en el rol.
+
+      <div className="psico-profile-body">
+        {groups.map(g => (
+          <div key={g.test} className="psico-profile-group">
+            <div className="psico-group-label">{g.test}</div>
+            {g.items.map((v, i) => {
+              const delta = v.score - v.ideal;
+              const band = getBand(v, v.score);
+              const cls = bandCls[band];
+              const barW = delta === 0 ? 0 : Math.min(50, (Math.abs(delta) / maxDev) * 50);
+              const isRight = delta >= 0;
+              return (
+                <div key={i} className={`psico-disp-row ${cls}`}>
+                  <span className="psico-disp-name">{v.name}</span>
+                  <span className={`psico-disp-weight ${weightCls[v.weight]}`} title={`Peso: ${v.weight}`}>{weightLabel[v.weight]}</span>
+                  <div className="psico-disp-bar">
+                    <div className="psico-disp-center"></div>
+                    {delta !== 0 && (
+                      <div
+                        className={`psico-disp-fill ${cls}`}
+                        style={isRight
+                          ? { left:'50%', width:`${barW}%` }
+                          : { right:'50%', width:`${barW}%` }
+                        }
+                      ></div>
+                    )}
+                  </div>
+                  <span className={`psico-disp-val ${cls}`}>
+                    {delta === 0 ? '=' : (delta > 0 ? '+' : '')}{delta === 0 ? '' : delta}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="psico-profile-footer">
+        Dispersión respecto al perfil ideal del cargo. Barras verdes indican valores aceptables; amarillo es neutral; 
+        naranja y rojo indican desviaciones que penalizan la nota.
+        Las variables con peso <strong>A</strong> (alto) tienen mayor impacto.
       </div>
     </div>
   );

@@ -265,6 +265,216 @@ window.CANDIDATES = [
 // --- Evidence builders ---
 // All transcripts / CV extracts / psico data are indexed by candidate id.
 
+// ---- Psychotechnical variables (PGV + 16FP + Dominancias) ----
+// Each entry: { test, name, weight, ideal, ranges: { aumentaLeve, neutral, disminuyeLeve, disminuyeFuerte } }
+// ranges contain the score values that fall into each band
+window.PSICO_VARIABLES = [
+  { test:'PGV', name:'DGV', weight:'ALTO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'PGV', name:'Receptividad', weight:'MEDIO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'PGV', name:'Agresividad', weight:'ALTO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'PGV', name:'Comprensión', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'PGV', name:'Adaptabilidad', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'PGV', name:'Control de sí mismo', weight:'ALTO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'PGV', name:'Tolerancia a la frustración', weight:'ALTO', ideal:7, ranges:{ aumentaLeve:[6,8], neutral:[5,9], disminuyeLeve:[4,10], disminuyeFuerte:[1,2,3] }},
+  { test:'PGV', name:'Combatividad', weight:'ALTO', ideal:7, ranges:{ aumentaLeve:[6,8], neutral:[5,9], disminuyeLeve:[4,10], disminuyeFuerte:[1,2,3] }},
+  { test:'PGV', name:'Dominio', weight:'MEDIO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'PGV', name:'Seguridad', weight:'MEDIO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'PGV', name:'Actividad', weight:'ALTO', ideal:3, ranges:{ aumentaLeve:[1,2], neutral:[4,5], disminuyeLeve:[6,7], disminuyeFuerte:[8,9,10] }},
+  { test:'PGV', name:'Sociabilidad', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Calidez', weight:'MEDIO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Inteligencia', weight:'BAJO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Fortaleza yóica', weight:'MEDIO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Dominio', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Impulsividad', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Conformidad con el grupo', weight:'BAJO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Audacia', weight:'ALTO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Idealismo', weight:'BAJO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Suspicacia', weight:'ALTO', ideal:5, ranges:{ aumentaLeve:[4,6], neutral:[3,7], disminuyeLeve:[2,8], disminuyeFuerte:[1,9,10] }},
+  { test:'16FP', name:'Imaginación', weight:'BAJO', ideal:4, ranges:{ aumentaLeve:[3,5], neutral:[2,6], disminuyeLeve:[1,7], disminuyeFuerte:[8,9,10] }},
+  { test:'16FP', name:'Astucia', weight:'MEDIO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Propensión a la culpa', weight:'MEDIO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Rebeldía', weight:'BAJO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Autosuficiencia', weight:'BAJO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Compulsividad', weight:'BAJO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'16FP', name:'Ansiedad libremente flotante', weight:'ALTO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+  { test:'DOMINANCIAS', name:'Dominancias', weight:'ALTO', ideal:6, ranges:{ aumentaLeve:[5,7], neutral:[4,8], disminuyeLeve:[3,9], disminuyeFuerte:[1,2,10] }},
+];
+
+// Classify a score into a band for a given variable
+function classifyPsicoScore(variable, score) {
+  if (score === variable.ideal) return 'ideal';
+  if (variable.ranges.aumentaLeve.includes(score)) return 'aumentaLeve';
+  if (variable.ranges.neutral.includes(score)) return 'neutral';
+  if (variable.ranges.disminuyeLeve.includes(score)) return 'disminuyeLeve';
+  if (variable.ranges.disminuyeFuerte.includes(score)) return 'disminuyeFuerte';
+  return 'disminuyeFuerte'; // fallback for out-of-range
+}
+window.classifyPsicoScore = classifyPsicoScore;
+
+// Per-candidate psychotechnical profile (scores on 1-10 scale per variable)
+window.PSICO_PROFILE = {};
+
+function buildPsicoProfile(c) {
+  if (c.stage < 2 || c.stageScores.psico == null) return null;
+  // Generate scores based on candidate's overall psico strength
+  // Strong candidates cluster near ideal; weaker ones can hit disminuyeLeve/Fuerte bands
+  const psicoScore = c.stageScores.psico || 60;
+  const seed = c.id.charCodeAt(1) * 7 + (c.id.charCodeAt(2) || 0) * 3;
+
+  return window.PSICO_VARIABLES.map((v, i) => {
+    // Pseudo-random but deterministic per candidate+variable
+    const hash = ((seed + i * 17 + v.ideal * 5 + i * i) % 100) / 100;
+
+    // Determine which band to pick from based on strength
+    // Strong (psico>=85): mostly ideal/aumentaLeve
+    // Mid (psico 70-84): mix of ideal/aumentaLeve/neutral
+    // Weak (psico 55-69): mix across all bands
+    // Very weak (psico<55): mostly neutral/disminuye
+    let score;
+    if (psicoScore >= 85) {
+      // 50% ideal, 40% aumentaLeve, 10% neutral
+      if (hash < 0.50) score = v.ideal;
+      else if (hash < 0.90) score = v.ranges.aumentaLeve[Math.floor(hash * 10) % v.ranges.aumentaLeve.length];
+      else score = v.ranges.neutral[Math.floor(hash * 10) % v.ranges.neutral.length];
+    } else if (psicoScore >= 70) {
+      // 30% ideal, 35% aumentaLeve, 25% neutral, 10% disminuyeLeve
+      if (hash < 0.30) score = v.ideal;
+      else if (hash < 0.65) score = v.ranges.aumentaLeve[Math.floor(hash * 10) % v.ranges.aumentaLeve.length];
+      else if (hash < 0.90) score = v.ranges.neutral[Math.floor(hash * 10) % v.ranges.neutral.length];
+      else score = v.ranges.disminuyeLeve[Math.floor(hash * 10) % v.ranges.disminuyeLeve.length];
+    } else if (psicoScore >= 55) {
+      // 15% ideal, 25% aumentaLeve, 25% neutral, 25% disminuyeLeve, 10% disminuyeFuerte
+      if (hash < 0.15) score = v.ideal;
+      else if (hash < 0.40) score = v.ranges.aumentaLeve[Math.floor(hash * 10) % v.ranges.aumentaLeve.length];
+      else if (hash < 0.65) score = v.ranges.neutral[Math.floor(hash * 10) % v.ranges.neutral.length];
+      else if (hash < 0.90) score = v.ranges.disminuyeLeve[Math.floor(hash * 10) % v.ranges.disminuyeLeve.length];
+      else score = v.ranges.disminuyeFuerte[Math.floor(hash * 10) % v.ranges.disminuyeFuerte.length];
+    } else {
+      // 5% ideal, 15% aumentaLeve, 20% neutral, 35% disminuyeLeve, 25% disminuyeFuerte
+      if (hash < 0.05) score = v.ideal;
+      else if (hash < 0.20) score = v.ranges.aumentaLeve[Math.floor(hash * 10) % v.ranges.aumentaLeve.length];
+      else if (hash < 0.40) score = v.ranges.neutral[Math.floor(hash * 10) % v.ranges.neutral.length];
+      else if (hash < 0.75) score = v.ranges.disminuyeLeve[Math.floor(hash * 10) % v.ranges.disminuyeLeve.length];
+      else score = v.ranges.disminuyeFuerte[Math.floor(hash * 10) % v.ranges.disminuyeFuerte.length];
+    }
+    return { ...v, score };
+  });
+}
+
+// Hand-crafted profile for c1 (María Camila, psico: 88 — excellent, mostly ideal/aumentaLeve)
+window.PSICO_PROFILE.c1 = window.PSICO_VARIABLES.map((v, i) => {
+  // Strong candidate: 60% ideal, 35% aumentaLeve, 5% neutral (1 variable)
+  const pattern = [
+    5,4,6,5,5,6,7,7,6,6,3,5, // PGV: all ideal except Receptividad(4=aumentaLeve), Agresividad(6=aumentaLeve→wait 6 IS ideal for Agresividad)
+    5,6,7,5,5,6,4,5,5,4,6,6,6,6,6,6,6  // 16FP + DOMINANCIAS
+  ];
+  // Let me hand-pick scores that are realistic for a strong candidate
+  const scores = [
+    5, // DGV → ideal
+    4, // Receptividad → aumentaLeve
+    6, // Agresividad → ideal
+    5, // Comprensión → ideal
+    6, // Adaptabilidad → aumentaLeve
+    6, // Control de sí mismo → ideal
+    7, // Tolerancia a la frustración → ideal
+    8, // Combatividad → aumentaLeve
+    6, // Dominio → ideal
+    7, // Seguridad → aumentaLeve
+    3, // Actividad → ideal
+    5, // Sociabilidad → ideal
+    5, // Calidez → ideal
+    6, // Inteligencia → ideal
+    6, // Fortaleza yóica → ideal
+    5, // Dominio 16FP → ideal
+    4, // Impulsividad → aumentaLeve
+    6, // Conformidad → ideal
+    5, // Audacia → ideal
+    5, // Idealismo → ideal
+    4, // Suspicacia → aumentaLeve
+    4, // Imaginación → ideal
+    7, // Astucia → aumentaLeve
+    5, // Propensión a la culpa → aumentaLeve
+    6, // Rebeldía → ideal
+    5, // Autosuficiencia → aumentaLeve
+    6, // Compulsividad → ideal
+    6, // Ansiedad libremente flotante → ideal
+    6, // Dominancias → ideal
+  ];
+  return { ...v, score: scores[i] };
+});
+
+// Hand-crafted profile for c2 (Andrés Felipe, psico: 74 — good but with some neutrals)
+window.PSICO_PROFILE.c2 = window.PSICO_VARIABLES.map((v, i) => {
+  const scores = [
+    4, // DGV → aumentaLeve
+    5, // Receptividad → ideal
+    5, // Agresividad → aumentaLeve
+    4, // Comprensión → aumentaLeve
+    6, // Adaptabilidad → aumentaLeve
+    5, // Control de sí mismo → aumentaLeve
+    6, // Tolerancia a la frustración → aumentaLeve
+    6, // Combatividad → aumentaLeve
+    5, // Dominio → aumentaLeve
+    7, // Seguridad → aumentaLeve
+    4, // Actividad → neutral
+    6, // Sociabilidad → aumentaLeve
+    4, // Calidez → aumentaLeve
+    5, // Inteligencia → aumentaLeve
+    5, // Fortaleza yóica → aumentaLeve
+    4, // Dominio 16FP → aumentaLeve
+    6, // Impulsividad → aumentaLeve
+    7, // Conformidad → aumentaLeve
+    6, // Audacia → aumentaLeve
+    4, // Idealismo → aumentaLeve
+    6, // Suspicacia → aumentaLeve
+    3, // Imaginación → aumentaLeve
+    5, // Astucia → aumentaLeve
+    7, // Propensión a la culpa → aumentaLeve
+    7, // Rebeldía → aumentaLeve
+    5, // Autosuficiencia → aumentaLeve
+    5, // Compulsividad → aumentaLeve
+    7, // Ansiedad libremente flotante → aumentaLeve
+    7, // Dominancias → aumentaLeve
+  ];
+  return { ...v, score: scores[i] };
+});
+
+// Hand-crafted profile for c8 (Santiago Morales, psico: 65 — weak, many neutrals and disminuye)
+window.PSICO_PROFILE.c8 = window.PSICO_VARIABLES.map((v, i) => {
+  const scores = [
+    3, // DGV → neutral
+    7, // Receptividad → neutral
+    4, // Agresividad → neutral
+    3, // Comprensión → neutral
+    6, // Adaptabilidad → aumentaLeve
+    8, // Control de sí mismo → neutral
+    5, // Tolerancia a la frustración → neutral
+    4, // Combatividad → disminuyeLeve
+    4, // Dominio → neutral
+    9, // Seguridad → disminuyeLeve
+    6, // Actividad → disminuyeLeve
+    2, // Sociabilidad → disminuyeLeve
+    3, // Calidez → neutral
+    4, // Inteligencia → neutral
+    8, // Fortaleza yóica → neutral
+    7, // Dominio 16FP → neutral
+    3, // Impulsividad → neutral
+    4, // Conformidad → neutral
+    3, // Audacia → neutral
+    8, // Idealismo → disminuyeLeve
+    7, // Suspicacia → neutral
+    6, // Imaginación → neutral
+    4, // Astucia → neutral
+    9, // Propensión a la culpa → disminuyeLeve
+    4, // Rebeldía → neutral
+    8, // Autosuficiencia → neutral
+    5, // Compulsividad → aumentaLeve
+    3, // Ansiedad libremente flotante → disminuyeLeve
+    4, // Dominancias → neutral
+  ];
+  return { ...v, score: scores[i] };
+});
+
 // Curated data for c1 stays hand-written below.
 window.TRANSCRIPTS = {};
 window.CV_EXTRACTS = {};
@@ -498,4 +708,5 @@ window.CANDIDATES.forEach(c => {
   if (!window.CV_EXTRACTS[c.id]) window.CV_EXTRACTS[c.id] = c.stage>=0 ? buildGenericCV(c) : {};
   if (!window.PSICO[c.id])       window.PSICO[c.id]       = buildGenericPsico(c);
   if (!window.DIM_STAGE[c.id])   window.DIM_STAGE[c.id]   = buildGenericDimStage(c);
+  if (!window.PSICO_PROFILE[c.id]) window.PSICO_PROFILE[c.id] = buildPsicoProfile(c);
 });
